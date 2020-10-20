@@ -1,25 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/colorPrimaryDark">
+<GridLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
-    <GridLayout
+    <TextView
+        android:layout_width="20dp"
+        android:layout_height="match_parent"
+        android:layout_row="0"
+        android:layout_rowSpan="2"
+        android:layout_column="0"></TextView>
+    <TextView
+        android:layout_width="20dp"
+        android:layout_height="match_parent"
+        android:layout_row="0"
+        android:layout_rowSpan="2"
+        android:layout_column="3"></TextView>
+
+    <TextView
+        android:id="@+id/tvDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_row="0"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:layout_gravity="right"
+        android:paddingRight="10dp"
+        android:text="@string/feces_info_tvDate"></TextView>
+
+    <EditText
+        android:id="@+id/editText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_row="0"
+        android:layout_column="1"
+        android:layout_columnWeight="1"
+        android:layout_gravity="left"
+        android:ems="10"
+        android:hint="@string/feces_info_dateHint"
+        android:inputType="date"
+        android:paddingLeft="10dp" />
+
+    <TextView
+        android:id="@+id/tvRemarks"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_row="1"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:layout_gravity="right"
+        android:paddingRight="10dp"
+        android:text="@string/feces_info_tvRemarks"></TextView>
+
+    <EditText
+        android:id="@+id/editText2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_row="1"
+        android:layout_column="1"
+        android:layout_columnSpan="1"
+        android:layout_columnWeight="1"
+        android:ems="10"
+        android:hint="@string/feces_info_remarksHint"
+        android:inputType="textMultiLine"
+        android:paddingLeft="10dp" />
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent"
+        android:layout_row="2"
+        android:layout_column="0"
+        android:layout_columnSpan="4"
+        android:orientation="vertical">
+
         <TextView
-            android:id="@+id/tvDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/feces_info_tvDate">
-        </TextView>
+            android:text="afadsfafasdf"/>
 
-        <EditText
-            android:id="@+id/editText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:inputType="date" />
-    </GridLayout>
+    </LinearLayout>
 
-</android.support.constraint.ConstraintLayout>
+
+</GridLayout>
