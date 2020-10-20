@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">FecesMemo</string>
+    <string name="btnChart">图表</string>
+    <string name="btnList">列表</string>
+    <string name="btnAdd">添加</string>
+    <string name="feces_info_tvDate">便便时间</string>
+</resources>
