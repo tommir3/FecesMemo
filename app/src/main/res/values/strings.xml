@@ -7,4 +7,6 @@
     <string name="feces_info_dateHint">请输入日期</string>
     <string name="feces_info_tvRemarks">便便备注:</string>
     <string name="feces_info_remarksHint">请输入备注信息</string>
+    <string name="main_info_title">最近三次便便时间</string>
+    <string name="main_list_button">更多</string>
 </resources>
