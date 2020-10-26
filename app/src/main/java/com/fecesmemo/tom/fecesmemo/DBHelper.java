@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class DBHelper  extends SQLiteOpenHelper {
@@ -174,6 +175,32 @@ public class DBHelper  extends SQLiteOpenHelper {
         }
         catch(Exception err)
         {
+            result = null;
+            System.out.printf(err.getMessage());
+        }
+        return result;
+    }
+
+    protected FecesInfo[] GetFecesInfosByDate(Date low, Date high){
+        FecesInfo[] result = null;
+        try{
+            SQLiteDatabase db = getReadableDatabase();
+            if(low == null){
+                low = DateHelper.Now();
+            }
+            if(high == null){
+                high = new Date();
+            }
+            String selection = "date > datetime(?) and date < datetime(?)";
+            String[] selectionArgs = new String[2];
+            selectionArgs[0] = DateHelper.DateToString(low);
+            selectionArgs[1] = DateHelper.DateToString(high);
+            Cursor bakData = db.query(_fecesTableName,null,selection,selectionArgs,"","","date",null);
+            if(bakData != null)
+            {
+                result = CursorToFecesInfos(bakData);
+            }
+        }catch(Exception err){
             result = null;
             System.out.printf(err.getMessage());
         }

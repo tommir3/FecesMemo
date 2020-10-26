@@ -1,17 +1,12 @@
 package com.fecesmemo.tom.fecesmemo;
 
-import android.opengl.Visibility;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.LinearLayout;
 import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
@@ -24,10 +19,12 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private Fragment[] _viewFragments;      //子页面数组
+
+    private DBHelper _db;       //数据库辅助类
     private LineChart _lineChart;        //折现图表控件
     private BarChart _barChart;         //柱状图表控件
     public enum ChartModel{
@@ -38,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        _db = new DBHelper(this);
         initUI();
     }
 
@@ -45,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     private void initUI(){
         _lineChart = findViewById(R.id.lineChart);
         _barChart = findViewById(R.id.barChart);
+        initLineChart();
+        initBarChart();
         Button btnAdd = findViewById(R.id.btnAdd);
         Button btnList = findViewById(R.id.btnList);
         RadioButton rbtnHalfMonth = findViewById(R.id.rbtnHalfMonth);
@@ -90,35 +90,36 @@ public class MainActivity extends AppCompatActivity {
     private CompoundButton.OnCheckedChangeListener radioButtonChartData = new CompoundButton.OnCheckedChangeListener(){
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            if(!isChecked){
+                return;
+            }
+            FecesInfo[] infos = null;
+            Date lowDate = null;
             switch(buttonView.getId()){
                 case R.id.rbtnHalfMonth:
-                    if(isChecked){
-                        return;
-                    }
+                    lowDate = DateHelper.GetBeforeDayDate(15);
                     break;
                 case R.id.rbtnMonth:
-                    if(isChecked){
-                        return;
-                    }
+                    lowDate = DateHelper.GetBeforeMonthDate(1);
                     break;
                 case R.id.rbtnHalfYear:
-                    if(isChecked){
-                        return;
-                    }
+                    lowDate = DateHelper.GetBeforeMonthDate(6);
                     break;
                 case R.id.rbtnYear:
-                    if(isChecked){
-                        return;
-                    }
+                    lowDate = DateHelper.GetBeforeMonthDate(12);
                     break;
                 case R.id.rbtnAll:
-                    if(isChecked){
-                        return;
-                    }
+                    lowDate = null;
                     break;
                 default:
+                    lowDate = null;
                     break;
             }
+            infos = _db.GetFecesInfosByDate(lowDate,null);
+
+
+
+
         }
     };
     //按钮点击事件
@@ -128,10 +129,10 @@ public class MainActivity extends AppCompatActivity {
             Fragment curFragment = null;
             switch(v.getId()){
                 case R.id.btnAdd:
-                    curFragment = _viewFragments[1];
+                    curFragment = new Feces_Information();
                     break;
                 case R.id.btnList:
-                    curFragment = _viewFragments[2];
+                    curFragment = new List_Layout();
                     break;
                 default:
                     break;
@@ -145,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private void setLineData(){
+    private void initLineChart(){
         //_lineChart = findViewById(R.id.chart);
         //_lineChart = new LineChart(this);
         _lineChart.getXAxis().setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
@@ -161,6 +162,27 @@ public class MainActivity extends AppCompatActivity {
         //xAxis.setAxisLineColor(Color.RED);   //X轴颜色
         //xAxis.setAxisLineWidth(2);           //X轴粗细
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);        //X轴所在位置   默认为上面
+    }
+
+    private void initBarChart(){
+        //_barChart = findViewById(R.id.chart);
+        //_barChart = new BarChart(this);
+        _barChart.getXAxis().setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
+        _barChart.getAxisLeft().setDrawGridLines(false);  //是否绘制Y轴上的网格线（背景里面的横线）
+        //对于右下角一串字母的操作
+        _barChart.getDescription().setEnabled(false);                  //是否显示右下角描述
+        //chart.getDescription().setText("这是修改那串英文的方法");    //修改右下角字母的显示
+        _barChart.getDescription().setTextSize(20);                    //字体大小
+        //是否隐藏右边的Y轴（不设置的话有两条Y轴 同理可以隐藏左边的Y轴）
+        _barChart.getAxisRight().setEnabled(false);
+        XAxis xAxis=_barChart.getXAxis();
+        //xAxis.setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
+        //xAxis.setAxisLineColor(Color.RED);   //X轴颜色
+        //xAxis.setAxisLineWidth(2);           //X轴粗细
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);        //X轴所在位置   默认为上面
+    }
+
+    private void setLineData(){
         List dataList = new ArrayList();
         dataList.add(new Entry(1,1));
         dataList.add(new Entry(2,3));
@@ -182,21 +204,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setBarData(){
-        //_barChart = findViewById(R.id.chart);
-        //_barChart = new BarChart(this);
-        _barChart.getXAxis().setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
-        _barChart.getAxisLeft().setDrawGridLines(false);  //是否绘制Y轴上的网格线（背景里面的横线）
-        //对于右下角一串字母的操作
-        _barChart.getDescription().setEnabled(false);                  //是否显示右下角描述
-        //chart.getDescription().setText("这是修改那串英文的方法");    //修改右下角字母的显示
-        _barChart.getDescription().setTextSize(20);                    //字体大小
-        //是否隐藏右边的Y轴（不设置的话有两条Y轴 同理可以隐藏左边的Y轴）
-        _barChart.getAxisRight().setEnabled(false);
-        XAxis xAxis=_barChart.getXAxis();
-        //xAxis.setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
-        //xAxis.setAxisLineColor(Color.RED);   //X轴颜色
-        //xAxis.setAxisLineWidth(2);           //X轴粗细
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);        //X轴所在位置   默认为上面
         List dataList = new ArrayList();
         dataList.add(new BarEntry(1,1));
         dataList.add(new BarEntry(2,3));
