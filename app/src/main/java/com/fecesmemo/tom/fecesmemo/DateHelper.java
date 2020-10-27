@@ -7,6 +7,19 @@ import java.util.Date;
 public class DateHelper {
     private static final String FormatPattern = "yyyy-MM-dd HH:mm";
 
+    public static Date Init(){
+        Date result;
+        try{
+            Calendar cal = Calendar.getInstance();
+            cal.set(1900,0,1);
+            result = cal.getTime();
+        }
+        catch(Exception err){
+            result = null;
+        }
+        return result;
+    }
+
     public static Date Now(){
         Date result;
         try{
@@ -105,15 +118,44 @@ public class DateHelper {
         return result;
     }
 
+    public static long DateToLong(Date date){
+        long result;
+        try{
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+            result = cal.getTimeInMillis();
+        }
+        catch(Exception err){
+            result = -1;
+        }
+        return result;
+    }
+
+    public static Date LongToDate(long value){
+        Date result;
+        try{
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(value);
+            result = cal.getTime();
+        }
+        catch(Exception err){
+            result = null;
+        }
+        return result;
+    }
+
     public static int GetDaysBetweenDate(Date minDate, Date maxDate)
     {
         int result = 0;
         try
         {
-            long minNum = minDate.getTime();
-            long maxNum = maxDate.getTime();
-            double val = (maxNum - minNum) / (60 * 1000 * 60 * 24);
-            result = (int)Math.ceil(val);
+            Calendar minCal = Calendar.getInstance();
+            minCal.setTime(minDate);
+            int minDay = minCal.get(Calendar.DAY_OF_YEAR);
+            Calendar maxCal = Calendar.getInstance();
+            maxCal.setTime(maxDate);
+            int maxDay = maxCal.get(Calendar.DAY_OF_YEAR);
+            result = maxDay - minDay;
         }
         catch(Exception err)
         {

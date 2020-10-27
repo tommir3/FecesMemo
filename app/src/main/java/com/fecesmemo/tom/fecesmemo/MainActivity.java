@@ -7,24 +7,32 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
     private DBHelper _db;       //数据库辅助类
+    private ChartModel _curChartModel = ChartModel.Line;//当前图表模式
     private LineChart _lineChart;        //折现图表控件
     private BarChart _barChart;         //柱状图表控件
     public enum ChartModel{
@@ -36,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         _db = new DBHelper(this);
+        _db.AddTestDatas();
         initUI();
     }
 
@@ -64,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
         rbtnYear.setOnCheckedChangeListener(radioButtonChartData);
         rbtnAll.setOnCheckedChangeListener(radioButtonChartData);
         rbtnInterval.setChecked(true);
+        //setChartModel(_curChartModel);
         rbtnAll.setChecked(true);
     }
     //图表切换事件
@@ -116,10 +126,11 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
             infos = _db.GetFecesInfosByDate(lowDate,null);
-
-
-
-
+            if(_curChartModel == ChartModel.Line){
+                setLineData(infos);
+            }else if(_curChartModel == ChartModel.Bar){
+                setBarData(infos);
+            }
         }
     };
     //按钮点击事件
@@ -145,11 +156,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-
+    //初始化线性图表
     private void initLineChart(){
         //_lineChart = findViewById(R.id.chart);
         //_lineChart = new LineChart(this);
-        _lineChart.getXAxis().setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
         _lineChart.getAxisLeft().setDrawGridLines(false);  //是否绘制Y轴上的网格线（背景里面的横线）
         //对于右下角一串字母的操作
         _lineChart.getDescription().setEnabled(false);                  //是否显示右下角描述
@@ -157,13 +167,27 @@ public class MainActivity extends AppCompatActivity {
         _lineChart.getDescription().setTextSize(20);                    //字体大小
         //是否隐藏右边的Y轴（不设置的话有两条Y轴 同理可以隐藏左边的Y轴）
         _lineChart.getAxisRight().setEnabled(false);
+        _lineChart.getLegend().setEnabled(false);
         XAxis xAxis=_lineChart.getXAxis();
-        //xAxis.setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
+        xAxis.setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
         //xAxis.setAxisLineColor(Color.RED);   //X轴颜色
-        //xAxis.setAxisLineWidth(2);           //X轴粗细
+        xAxis.setAxisLineWidth(2);           //X轴粗细
+        xAxis.setLabelRotationAngle(-30);
+        xAxis.setValueFormatter(new IAxisValueFormatter() {
+            @Override
+            public String getFormattedValue(float v, AxisBase axisBase) {
+                return DateHelper.DateToString(DateHelper.LongToDate((long)v),"YYYY MM-dd HH:mm");
+            }
+        });
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);        //X轴所在位置   默认为上面
+        YAxis yAxis = _lineChart.getAxisLeft();
+        yAxis.setDrawGridLines(false);  //是否绘制Y轴上的网格线（背景里面的竖线）
+        yAxis.setZeroLineWidth(2);
+//        yAxis.setAxisMinimum(0);
+//        yAxis.setAxisMaximum(100);
+        yAxis.setGranularity(1);
     }
-
+    //初始化柱状图表
     private void initBarChart(){
         //_barChart = findViewById(R.id.chart);
         //_barChart = new BarChart(this);
@@ -181,17 +205,21 @@ public class MainActivity extends AppCompatActivity {
         //xAxis.setAxisLineWidth(2);           //X轴粗细
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);        //X轴所在位置   默认为上面
     }
-
-    private void setLineData(){
+    //设置线性图表数据
+    private void setLineData(FecesInfo[] infos){
         List dataList = new ArrayList();
-        dataList.add(new Entry(1,1));
-        dataList.add(new Entry(2,3));
-        dataList.add(new Entry(3,1));
-        dataList.add(new Entry(4,2));
-        dataList.add(new Entry(5,1));
-        dataList.add(new Entry(6,3));
-        dataList.add(new Entry(7,1));
-        dataList.add(new Entry(8,2));
+        Date minDate, maxDate;
+        int intervals = 0;
+        for(int i = 0; i < infos.length; ++i){
+            maxDate = DateHelper.StringToDate(infos[i].dateStr);
+            if(i > 0){
+                minDate = DateHelper.StringToDate(infos[i - 1].dateStr);
+                intervals = DateHelper.GetDaysBetweenDate(minDate,maxDate);
+            }else{
+                intervals = 0;
+            }
+            dataList.add(new Entry(Float.valueOf(DateHelper.DateToLong(DateHelper.StringToDate(infos[i].dateStr))),Float.valueOf(intervals)));
+        }
         LineDataSet dataSet=new LineDataSet(dataList,null);
         dataSet.setLineWidth(2f);
         dataSet.setCircleRadius(5f);
@@ -202,17 +230,25 @@ public class MainActivity extends AppCompatActivity {
         _lineChart.notifyDataSetChanged();
         _lineChart.invalidate();
     }
-
-    private void setBarData(){
+    //设置柱状图表数据
+    private void setBarData(FecesInfo[] infos){
+        Map<Long,Integer> mapData = new HashMap<Long,Integer>();
+        long key = -1;
+        for(int i = 0; i < infos.length; ++i){
+            key = DateHelper.DateToLong(DateHelper.StringToDate(infos[i].dateStr));
+            if(!mapData.containsKey(key)){
+                mapData.put(key,1);
+            }else{
+                mapData.put(key,mapData.get(key) + 1);
+            }
+        }
         List dataList = new ArrayList();
-        dataList.add(new BarEntry(1,1));
-        dataList.add(new BarEntry(2,3));
-        dataList.add(new BarEntry(3,1));
-        dataList.add(new BarEntry(4,2));
-        dataList.add(new BarEntry(5,1));
-        dataList.add(new BarEntry(6,3));
-        dataList.add(new BarEntry(7,1));
-        dataList.add(new BarEntry(8,2));
+        Iterator<Long> iter = mapData.keySet().iterator();
+        while(iter.hasNext()){
+            Long k=iter.next();
+            Integer value = mapData.get(key);
+            dataList.add(new BarEntry(k,value));
+        }
         BarDataSet dataSet=new BarDataSet(dataList,null);
         BarData barData=new BarData(dataSet);
         _barChart.setData(barData);
@@ -223,14 +259,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setChartModel(ChartModel model){
+        RadioGroup rg = findViewById(R.id.rGropChartData);
+        _curChartModel = model;
         if(model == ChartModel.Line){
             _lineChart.setVisibility(View.VISIBLE);
             _barChart.setVisibility(View.GONE);
-            setLineData();
+            rg.check(rg.getCheckedRadioButtonId());
         }else if(model == ChartModel.Bar){
             _lineChart.setVisibility(View.GONE);
             _barChart.setVisibility(View.VISIBLE);
-            setBarData();
+            rg.check(rg.getCheckedRadioButtonId());
         }
     }
 }

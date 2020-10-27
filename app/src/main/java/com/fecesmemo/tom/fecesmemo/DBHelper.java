@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class DBHelper  extends SQLiteOpenHelper {
     private final static int _dbVersion = 1;
@@ -19,6 +20,34 @@ public class DBHelper  extends SQLiteOpenHelper {
         super(context,"FecesMemoDatabase",null,_dbVersion);
     }
 
+    public void AddTestDatas(){
+        DelAll();
+        FecesInfo info = new FecesInfo();
+        info.dateStr = "2020-05-10 10:10";
+        info.remark = "正常";
+        info.imgPath = "";
+        AddFecesInfo(info);
+        info = new FecesInfo();
+        info.dateStr = "2020-05-10 15:30";
+        info.remark = "正常";
+        info.imgPath = "";
+        AddFecesInfo(info);
+        info = new FecesInfo();
+        info.dateStr = "2020-05-11 12:30";
+        info.remark = "正常";
+        info.imgPath = "";
+        AddFecesInfo(info);
+        info = new FecesInfo();
+        info.dateStr = "2020-05-12 09:20";
+        info.remark = "正常";
+        info.imgPath = "";
+        AddFecesInfo(info);
+        info = new FecesInfo();
+        info.dateStr = "2020-05-12 18:40";
+        info.remark = "正常";
+        info.imgPath = "";
+        AddFecesInfo(info);
+    }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -120,6 +149,22 @@ public class DBHelper  extends SQLiteOpenHelper {
         return result;
     }
 
+    protected boolean DelAll(){
+        boolean result;
+        try
+        {
+            SQLiteDatabase db = getWritableDatabase();
+            int bakVal = db.delete(_fecesTableName,null,null);
+            result = (bakVal > 0) ? true : false;
+        }
+        catch(Exception err)
+        {
+            result = false;
+            System.out.printf(err.getMessage());
+        }
+        return result;
+    }
+
     protected boolean UpdateFecesInfo(FecesInfo info){
         boolean result;
         try
@@ -186,10 +231,10 @@ public class DBHelper  extends SQLiteOpenHelper {
         try{
             SQLiteDatabase db = getReadableDatabase();
             if(low == null){
-                low = DateHelper.Now();
+                low = DateHelper.Init();
             }
             if(high == null){
-                high = new Date();
+                high = DateHelper.Now();
             }
             String selection = "date > datetime(?) and date < datetime(?)";
             String[] selectionArgs = new String[2];
