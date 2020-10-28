@@ -32,11 +32,15 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     private DBHelper _db;       //数据库辅助类
+    private DataModel _curDataModel = DataModel.All;    //当前数据类型
     private ChartModel _curChartModel = ChartModel.Line;//当前图表模式
     private LineChart _lineChart;        //折现图表控件
     private BarChart _barChart;         //柱状图表控件
     public enum ChartModel{
         Line, Bar
+    }
+    public enum DataModel{
+        HalfMonth,Month,HalfYear,Year,All
     }
 
     @Override
@@ -50,8 +54,6 @@ public class MainActivity extends AppCompatActivity {
 
     //初始化UI界面
     private void initUI(){
-        _lineChart = findViewById(R.id.lineChart);
-        _barChart = findViewById(R.id.barChart);
         initLineChart();
         initBarChart();
         Button btnAdd = findViewById(R.id.btnAdd);
@@ -83,12 +85,12 @@ public class MainActivity extends AppCompatActivity {
             switch(buttonView.getId()){
                 case R.id.rbtnInterval:
                     if(isChecked){
-                        setChartModel(ChartModel.Line);
+                        setChartModel(ChartModel.Line,_curDataModel);
                     }
                     break;
                 case R.id.rbtnCount:
                     if(isChecked){
-                        setChartModel(ChartModel.Bar);
+                        setChartModel(ChartModel.Bar,_curDataModel);
                     }
                     break;
                 default:
@@ -104,28 +106,27 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             FecesInfo[] infos = null;
-            Date lowDate = null;
             switch(buttonView.getId()){
                 case R.id.rbtnHalfMonth:
-                    lowDate = DateHelper.GetBeforeDayDate(15);
+                    _curDataModel = DataModel.HalfMonth;
                     break;
                 case R.id.rbtnMonth:
-                    lowDate = DateHelper.GetBeforeMonthDate(1);
+                    _curDataModel = DataModel.Month;
                     break;
                 case R.id.rbtnHalfYear:
-                    lowDate = DateHelper.GetBeforeMonthDate(6);
+                    _curDataModel = DataModel.HalfYear;
                     break;
                 case R.id.rbtnYear:
-                    lowDate = DateHelper.GetBeforeMonthDate(12);
+                    _curDataModel = DataModel.Year;
                     break;
                 case R.id.rbtnAll:
-                    lowDate = null;
+                    _curDataModel = DataModel.All;
                     break;
                 default:
-                    lowDate = null;
+                    _curDataModel = DataModel.All;
                     break;
             }
-            infos = _db.GetFecesInfosByDate(lowDate,null);
+            infos = getDataByDataModel(_curDataModel);
             if(_curChartModel == ChartModel.Line){
                 setLineData(infos);
             }else if(_curChartModel == ChartModel.Bar){
@@ -158,8 +159,7 @@ public class MainActivity extends AppCompatActivity {
     };
     //初始化线性图表
     private void initLineChart(){
-        //_lineChart = findViewById(R.id.chart);
-        //_lineChart = new LineChart(this);
+        _lineChart = findViewById(R.id.lineChart);
         _lineChart.getAxisLeft().setDrawGridLines(false);  //是否绘制Y轴上的网格线（背景里面的横线）
         //对于右下角一串字母的操作
         _lineChart.getDescription().setEnabled(false);                  //是否显示右下角描述
@@ -176,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
         xAxis.setValueFormatter(new IAxisValueFormatter() {
             @Override
             public String getFormattedValue(float v, AxisBase axisBase) {
-                return DateHelper.DateToString(DateHelper.LongToDate((long)v),"YYYY MM-dd HH:mm");
+                return DateHelper.DateToString(DateHelper.LongToDate((long)v),"yyyy-MM-dd HH:mm");
             }
         });
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);        //X轴所在位置   默认为上面
@@ -189,9 +189,7 @@ public class MainActivity extends AppCompatActivity {
     }
     //初始化柱状图表
     private void initBarChart(){
-        //_barChart = findViewById(R.id.chart);
-        //_barChart = new BarChart(this);
-        _barChart.getXAxis().setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
+        _barChart = findViewById(R.id.barChart);
         _barChart.getAxisLeft().setDrawGridLines(false);  //是否绘制Y轴上的网格线（背景里面的横线）
         //对于右下角一串字母的操作
         _barChart.getDescription().setEnabled(false);                  //是否显示右下角描述
@@ -199,14 +197,31 @@ public class MainActivity extends AppCompatActivity {
         _barChart.getDescription().setTextSize(20);                    //字体大小
         //是否隐藏右边的Y轴（不设置的话有两条Y轴 同理可以隐藏左边的Y轴）
         _barChart.getAxisRight().setEnabled(false);
+        _barChart.getLegend().setEnabled(false);
         XAxis xAxis=_barChart.getXAxis();
-        //xAxis.setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
+        xAxis.setDrawGridLines(false);  //是否绘制X轴上的网格线（背景里面的竖线）
         //xAxis.setAxisLineColor(Color.RED);   //X轴颜色
-        //xAxis.setAxisLineWidth(2);           //X轴粗细
+        xAxis.setAxisLineWidth(2);           //X轴粗细
+        xAxis.setLabelRotationAngle(-30);
+        xAxis.setValueFormatter(new IAxisValueFormatter() {
+            @Override
+            public String getFormattedValue(float v, AxisBase axisBase) {
+                return DateHelper.DateToString(DateHelper.LongToDate((long)v),"yyyy-MM-dd");
+            }
+        });
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);        //X轴所在位置   默认为上面
+        YAxis yAxis = _barChart.getAxisLeft();
+        yAxis.setDrawGridLines(false);  //是否绘制Y轴上的网格线（背景里面的竖线）
+        yAxis.setZeroLineWidth(2);
+//        yAxis.setAxisMinimum(0);
+//        yAxis.setAxisMaximum(100);
+        yAxis.setGranularity(1);
     }
     //设置线性图表数据
     private void setLineData(FecesInfo[] infos){
+        if(infos == null){
+            return;
+        }
         List dataList = new ArrayList();
         Date minDate, maxDate;
         int intervals = 0;
@@ -232,10 +247,13 @@ public class MainActivity extends AppCompatActivity {
     }
     //设置柱状图表数据
     private void setBarData(FecesInfo[] infos){
-        Map<Long,Integer> mapData = new HashMap<Long,Integer>();
+        if(infos == null){
+            return;
+        }
+        Map<Long,Integer> mapData = getDateArray(_curDataModel);
         long key = -1;
         for(int i = 0; i < infos.length; ++i){
-            key = DateHelper.DateToLong(DateHelper.StringToDate(infos[i].dateStr));
+            key = DateHelper.DateToLong(DateHelper.StringToDate(infos[i].dateStr),"yyyy-MM-dd");
             if(!mapData.containsKey(key)){
                 mapData.put(key,1);
             }else{
@@ -258,17 +276,125 @@ public class MainActivity extends AppCompatActivity {
         _barChart.invalidate();
     }
 
-    private void setChartModel(ChartModel model){
+    private void setChartModel(ChartModel chartModel, DataModel dataModel){
         RadioGroup rg = findViewById(R.id.rGropChartData);
-        _curChartModel = model;
-        if(model == ChartModel.Line){
+        _curChartModel = chartModel;
+        _curDataModel = dataModel;
+        if(chartModel == ChartModel.Line){
             _lineChart.setVisibility(View.VISIBLE);
             _barChart.setVisibility(View.GONE);
-            rg.check(rg.getCheckedRadioButtonId());
-        }else if(model == ChartModel.Bar){
+            if(dataModel != _curDataModel){
+                rg.check(getRadioIdByDataModel(dataModel));
+            }else{
+                setLineData(getDataByDataModel(dataModel));
+            }
+        }else if(chartModel == ChartModel.Bar){
             _lineChart.setVisibility(View.GONE);
             _barChart.setVisibility(View.VISIBLE);
-            rg.check(rg.getCheckedRadioButtonId());
+            if(dataModel != _curDataModel){
+                rg.check(getRadioIdByDataModel(dataModel));
+            }else{
+                setBarData(getDataByDataModel(dataModel));
+            }
         }
+    }
+
+    private FecesInfo[] getDataByDataModel(DataModel dataModel){
+        FecesInfo[] result = null;
+        Date lowDate = null;
+        switch(dataModel){
+            case HalfMonth:
+                _curDataModel = DataModel.HalfMonth;
+                lowDate = DateHelper.GetBeforeDayDate(15);
+                break;
+            case Month:
+                _curDataModel = DataModel.Month;
+                lowDate = DateHelper.GetBeforeMonthDate(1);
+                break;
+            case HalfYear:
+                _curDataModel = DataModel.HalfYear;
+                lowDate = DateHelper.GetBeforeMonthDate(6);
+                break;
+            case Year:
+                _curDataModel = DataModel.Year;
+                lowDate = DateHelper.GetBeforeMonthDate(12);
+                break;
+            case All:
+                _curDataModel = DataModel.All;
+                lowDate = null;
+                break;
+            default:
+                _curDataModel = DataModel.All;
+                lowDate = null;
+                break;
+        }
+        result = _db.GetFecesInfosByDate(lowDate,null);
+        return result;
+    }
+
+    private int getRadioIdByDataModel(DataModel dataModel){
+        int id = -1;
+        switch(dataModel){
+            case HalfMonth:
+                id = R.id.rbtnHalfMonth;
+                break;
+            case Month:
+                id = R.id.rbtnMonth;
+                break;
+            case HalfYear:
+                id = R.id.rbtnHalfYear;
+                break;
+            case Year:
+                id = R.id.rbtnYear;
+                break;
+            case All:
+                id = R.id.rbtnAll;
+                break;
+            default:
+                id = R.id.rbtnAll;
+                break;
+        }
+        return id;
+    }
+
+    private Map<Long,Integer> getDateArray(DataModel dataModel){
+        Map<Long,Integer> result = new HashMap<>();
+        Date curDate = DateHelper.Now();
+        Date pDate;
+        switch(dataModel){
+            case HalfMonth:
+                for(int i = 0; i < 15; ++i){
+                    pDate = DateHelper.GetBeforeDayDate(i);
+                    result.put(DateHelper.DateToLong(pDate,"yyyy-MM-dd"),0);
+                }
+                break;
+            case Month:
+                for(int i = 0; i < 30; ++i){
+                    pDate = DateHelper.GetBeforeDayDate(i);
+                    result.put(DateHelper.DateToLong(pDate,"yyyy-MM-dd"),0);
+                }
+                break;
+            case HalfYear:
+                for(int i = 0; i < 180; ++i){
+                    pDate = DateHelper.GetBeforeDayDate(i);
+                    result.put(DateHelper.DateToLong(pDate,"yyyy-MM-dd"),0);
+                }
+                break;
+            case Year:
+                for(int i = 0; i < 360; ++i){
+                    pDate = DateHelper.GetBeforeDayDate(i);
+                    result.put(DateHelper.DateToLong(pDate,"yyyy-MM-dd"),0);
+                }
+                break;
+            case All:
+                for(int i = 0; i < 15; ++i){
+                    pDate = DateHelper.GetBeforeDayDate(i);
+                    result.put(DateHelper.DateToLong(pDate,"yyyy-MM-dd"),0);
+                }
+                break;
+            default:
+                break;
+        }
+        return result;
     }
 }

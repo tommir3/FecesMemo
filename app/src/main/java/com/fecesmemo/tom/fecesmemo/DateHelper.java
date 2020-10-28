@@ -119,9 +119,14 @@ public class DateHelper {
     }
 
     public static long DateToLong(Date date){
+        return DateToLong(date, FormatPattern);
+    }
+
+    public static long DateToLong(Date date, String formatPattern){
         long result;
         try{
-            Calendar cal = Calendar.getInstance();
+            SimpleDateFormat format = new SimpleDateFormat(formatPattern);
+            Calendar cal = format.getCalendar();
             cal.setTime(date);
             result = cal.getTimeInMillis();
         }
@@ -132,9 +137,14 @@ public class DateHelper {
     }
 
     public static Date LongToDate(long value){
+        return LongToDate(value, FormatPattern);
+    }
+
+    public static Date LongToDate(long value, String formatPattern){
         Date result;
         try{
-            Calendar cal = Calendar.getInstance();
+            SimpleDateFormat format = new SimpleDateFormat(formatPattern);
+            Calendar cal = format.getCalendar();
             cal.setTimeInMillis(value);
             result = cal.getTime();
         }
